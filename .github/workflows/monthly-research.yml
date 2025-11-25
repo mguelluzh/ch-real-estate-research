@@ -1,0 +1,38 @@
+name: Monthly Swiss Real Estate Research
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"   # läuft am 1. jedes Monats um 06:00 UTC
+  workflow_dispatch:       # erlaubt manuelles Auslösen
+
+jobs:
+  run-research:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install OpenAI client
+        run: pip install openai
+
+      - name: Run research script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python research_job.py
+
+      - name: Save output
+        run: |
+          mkdir -p reports
+          python research_job.py > reports/report_$(date +"%Y-%m-%d").txt
+
+      - name: Upload monthly report artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Swiss-real-estate-report
+          path: reports/
